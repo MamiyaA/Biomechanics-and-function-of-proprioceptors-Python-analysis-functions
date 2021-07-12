@@ -1,9 +1,10 @@
 # Biomechanics and function of proprioceptors: Python analysis class and functions
 
-Jupyter notebook containing python class and functions for analyzing calcium imaging and cell movement tracking data recorded from the leg of fruit flies.
+### Jupyter notebook containing python class and functions for analyzing calcium imaging and cell movement tracking data recorded from the leg of fruit flies.
 
-Brief description of the notebook/functions
+## Brief description of the notebook/functions
 
+# 20210712_python_class_for_preprocessing_two_photon_imaging_data.ipynb
 ## **Python class for preprocessing two-photon imaging data and example usages**
 
 * Read image files recorded by ScanImage and demultiplex the images into green and red channel.
