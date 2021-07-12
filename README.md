@@ -4,7 +4,7 @@
 
 ## Brief description of the notebook/class/functions
 ---
-### 20210712_python_class_for_preprocessing_two_photon_imaging_data.ipynb
+### 20210712_python_class_for_preprocessing_two_photon_imaging_data.ipynb: 
 
 **Python class for preprocessing two-photon imaging data and example usages**
 
