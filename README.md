@@ -4,8 +4,20 @@ Jupyter notebook containing python class and functions for analyzing calcium ima
 
 Brief description of the notebook/functions
 
-Filter_ScanImage_tiff_files_average_fastZ.ipynb : Read in .tiff files acquired using the ScanImage (3D fast Z setting) and filter them using a gaussian 3D filter
+## **Python class for preprocessing two-photon imaging data and example usages**
 
-make_video_with_filtered_tdTomato_signals.ipynb: Read in the tdTomato signal generated from the "Filter_ScanImage_tiff_files_average_fastZ.ipynb" mentioned above,and make a video overlaying raw tdTomato signal (representing cell position) with user specified threshold level. 
+* Read image files recorded by ScanImage and demultiplex the images into green and red channel.
 
-make_video_with_filtered_GCaMP_signals.ipynb: Python function for creating a video that shows the calcium activities of the cells during imaging. Uses OpenCV to create a video of GCaMP (calcium indicator) fluorescent images overlayed on top of the thresholded image.Read in the GCaMP signal generated from the "Filter_ScanImage_tiff_files_average_fastZ.ipynb" mentioned above.
+* Filter images with gaussian filter (of specified kernel size).
+
+* Subpixel image motion correcion using FFT.
+
+* Use end-of-the-frame signals for two-photon images and IR high-speed camera images to synchronize the two imaging stream.
+
+* Make a movie that shows two-photon images (both green and red channel) and IR high-speed camera images simultaneously for quick review.
+
+
+
+---
+* *This example Jupyter notebook is set to run on google colab using data on google drive.*
+* *Parameters in the .yaml files are set for downstairs two-photon microscope.*
