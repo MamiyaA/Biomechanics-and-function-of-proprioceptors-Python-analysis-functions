@@ -2,10 +2,11 @@
 
 ### Jupyter notebook containing python class and functions for analyzing calcium imaging and cell movement tracking data recorded from the leg of fruit flies.
 
-## Brief description of the notebook/functions
+## Brief description of the notebook/class/functions
+---
+### 20210712_python_class_for_preprocessing_two_photon_imaging_data.ipynb
 
-# 20210712_python_class_for_preprocessing_two_photon_imaging_data.ipynb
-## **Python class for preprocessing two-photon imaging data and example usages**
+**Python class for preprocessing two-photon imaging data and example usages**
 
 * Read image files recorded by ScanImage and demultiplex the images into green and red channel.
 
@@ -17,8 +18,7 @@
 
 * Make a movie that shows two-photon images (both green and red channel) and IR high-speed camera images simultaneously for quick review.
 
-
-
----
 * *This example Jupyter notebook is set to run on google colab using data on google drive.*
+
 * *Parameters in the .yaml files are set for downstairs two-photon microscope.*
+---
