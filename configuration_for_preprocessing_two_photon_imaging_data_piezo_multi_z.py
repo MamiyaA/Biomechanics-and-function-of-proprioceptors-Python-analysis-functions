@@ -20,9 +20,12 @@ parameter_file = [
                   'min_range2': 10, # min value for the GCaMP channel
                   'max_range2': 200, # max value for the GCaMP channel
                   'min_range3': 0, #min value for the DF/F and DR/R
-                  'max_range3': 2, #max value for the DF/F and DR/R
-                  'gcamp_threshold': 5, #threshold for gcamp to calculate the DF/F and DR/R
+                  'max_range3': 3, #max value for the DF/F and DR/R
+                  'gcamp_threshold': 10, #threshold for gcamp to calculate the DF/F and DR/R
+                  'tdTomato_threshold': 20, #threshold for tdTomato to calculate the DR/R
+                  'ratio_threshold': 0.1,#threshold for gcamp/tdTomato ratio to calculate the DR/R
                   'response_range': 20, #number of frames after the start of the piezo stimulus to use as the response
+                  'base_range': 20, #number of frames before the start of the piezo stimulus to use as the baseline
                   'upsample': 4, # upsampling factor. Will register to 1/upsample pixels
                   'registration_channel': 2 # imaging channel to use for registering images
                    }
