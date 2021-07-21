@@ -1,11 +1,11 @@
 
-"""### A python class for preprocessing two-photon images
+"""### A python class for preprocessing two-photon images and calculate response maps for piezo stimuli
 
-* **filter_ScanImageFile_singleZ**: load ScanImage file, demultiplex the data into green and red channel, filter images with gaussian filter.
+* **filter_ScanImageFile_separate_z**: load ScanImage file, demultiplex the data into green and red channel, demultiplex into each z-level, filter images with gaussian filter.
 
-* **motion_correction**: correct for motion artifact at subpixel resolution using FFT.
+* **motion_correction_separate_z**: correct for motion artifact at subpixel resolution using FFT. Correct motion at each z-level.
 
-* **detect_camera_imaging_frames2**: use frame signals and mirro signals recorded for the two-photon image and IR high-speed camera to synchronize the two imaging streams.
+* **detect_camera_imaging_frames2**: use frame signals and mirror signals recorded for the two-photon image and IR high-speed camera to synchronize the two imaging streams.
 
 * **make_synchronized_video_gray**: make a video that shows two-photon images (both green and red channel) and IR high-speed camera images simultaneously for a quick review of the data.
 
@@ -90,6 +90,7 @@ class AxonRecording_separate_z:
     self.frame_data_path = None
     self.piezo_data_path = None
     self.map_data_path = None
+    self.merged_path = None
 
 
   def filter_ScanImageFile_separate_z(self):
@@ -137,7 +138,7 @@ class AxonRecording_separate_z:
 
     #save the depth_avg_image
     image_file_name=file_name.split('.')
-    GCaMP_name=(image_file_name[0]+"GCaMP_Filtered_separate_z")
+    GCaMP_name=(image_file_name[0]+"GCaMP_Filtered_Zs")
     print(GCaMP_name)
     with open(GCaMP_name, "wb") as f:
       pickle.dump(depth_avg_image_GCaMP,f)
@@ -152,7 +153,7 @@ class AxonRecording_separate_z:
 
     #save the depth_avg_image
     image_file_name=file_name.split('.')
-    tdTomato_name=(image_file_name[0]+"tdTomato_Filtered_separate_z")
+    tdTomato_name=(image_file_name[0]+"tdTomato_Filtered_Zs")
     print(tdTomato_name)
     with open(tdTomato_name, "wb") as f:
       pickle.dump(depth_avg_image_tdTomato,f)
@@ -228,13 +229,13 @@ class AxonRecording_separate_z:
     if registration_channel==1:
 
       #we used gcamp signal to register.
-      outfile_name=(gcamp_filtered_path+"_registered_separate_z")
+      outfile_name=(gcamp_filtered_path+"_registered_Zs")
       print(outfile_name)
       with open(outfile_name, "wb") as f:
         pickle.dump(registered_images,f)
       self.gcamp_registered_path = outfile_name
       #Also save tdTomato signals
-      outfile_name=(tdTomato_filtered_path+"_registered_separate_z")
+      outfile_name=(tdTomato_filtered_path+"_registered_Zs")
       print(outfile_name)
       with open(outfile_name, "wb") as f:
         pickle.dump(registered_images2,f)
@@ -242,13 +243,13 @@ class AxonRecording_separate_z:
 
     else:
       #we used tdTomato signal to register.
-      outfile_name=(tdTomato_filtered_path+"_registered_separate_z")
+      outfile_name=(tdTomato_filtered_path+"_registered_Zs")
       print(outfile_name)
       with open(outfile_name, "wb") as f:
         pickle.dump(registered_images,f)
       self.tdTomato_registered_path = outfile_name
       #Also save gcamp signals
-      outfile_name=(gcamp_filtered_path+"_registered_separate_z")
+      outfile_name=(gcamp_filtered_path+"_registered_Zs")
       print(outfile_name)
       with open(outfile_name, "wb") as f:
         pickle.dump(registered_images2,f)
@@ -775,3 +776,14 @@ class AxonRecording_separate_z:
     axs[1].set_yticks([])
     axs[1].set_xticks([])
     axs[1].set_title('DR/R map', fontsize=20)
+
+    #Save the merged maps.
+    outfile_name=map_data_file+'_merged'
+
+    with open(outfile_name, "wb") as f:
+      pickle.dump([DF_F_projection, DR_R_projection], f)
+    print(outfile_name)
+
+    self.merged_path = outfile_name
+
+    return self.merged_path
