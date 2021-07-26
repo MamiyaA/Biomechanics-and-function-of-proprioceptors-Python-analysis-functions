@@ -35,18 +35,24 @@ from skimage.registration import phase_cross_correlation
 from skimage.registration._phase_cross_correlation import _upsampled_dft
 from scipy.ndimage import fourier_shift
 
-# Define a class "AxonRecording_separate_z" for filtering (involves demulitiplexing the imaging data) and making
-#an example video (involves detecting frame signals and matching the correct frames). This class will keep all z-levels
-#separate until the end where we make the DR/R and DF/F. (need to check if the matrix fit the memory)
+# Define a class "LegVibration_separate_z" for analyzing two-photon calcium imaging data in response to the
+#vibration stimuli (high frequency vibration with Piezo).
+#Includes, preprocessing (demulitplexing, filtering, motion-correction),
+#making exaple video (synchronizing video images with two-photon images by detecting frame signals),
+# and generating response maps (detecting frames where vibration stimuli occured and making DF/F and DR/R maps).
+#This class will keep all z-levels separate until the end where we make the DR/R and DF/F.
 
-class AxonRecording_separate_z:
+class LegVibration_separate_z:
   """
-  This class initializes a axon_recording objects with attributes: data_file_path, data, frame_signal_file_path, video_file_path, etc
-  and methods: filter_images and make_videos
+  This class initializes a LegVibration_separate_z objects with attributes: data_file_path, frame_signal_filepath,
+  config_filepath, etc (all parameters are included in the config.yaml configuration file)
+  and methods: filter_ScanImageFile_separate_z, motion_correction_separate_z, detect_camera_imaging_frames2,
+  detect_piezo_start_frames, make_synchronized_video_gray_piezo, get_piezo_response_map_separate_z,
+  and merge_piezo_response_map
   """
-  def __init__(self,data_filepath,frame_signal_filepath,video_filepath,config_file_path):
+  def __init__(self,data_filepath,frame_signal_filepath,config_filepath):
 
-    with open(config_file_path, "r") as file:
+    with open(config_filepath, "r") as file:
             config = yaml.safe_load(file) # read from config.yaml
 
     self.gaussian_sigma = config[0]['gaussian_filter']
@@ -82,7 +88,6 @@ class AxonRecording_separate_z:
 
     self.data_filepath = data_filepath
     self.frame_signal_filepath = frame_signal_filepath
-    self.video_filepath = video_filepath
     self.gcamp_filtered_path = None
     self.tdTomato_filtered_path = None
     self.gcamp_registered_path = None
@@ -441,120 +446,6 @@ class AxonRecording_separate_z:
 
     return self.piezo_data_path
 
-
-
-
-  def make_synchronized_video_gray(self):
-    """
-    revised slightly to use the registered images for GCaMP. Change later to
-    register both images (currently some don't have tdTomato) and use registered
-    version of both images.
-
-    a function to load the filtered data for both tdTomato and GCaMP, load the
-    correct frame for the video, and make a synchronized .avi movie.
-    *tdTomato_file: a pickle file that contains the filtered tdTomato images.
-    Each object should have a path to this file
-    *GCaMP_file: same for the GCaMP.
-    *input_video_file: a .mp4 file that contains the prep's image from below.
-    Each object should have a path to this file.
-    * n_of_z: number of z levels
-    * frame_data: a pickle file that contains the frame info. Each object should
-    have a path to this file.
-    * frames_per_second: defines how many fps for the video.
-    *min_range and max_range defines the min and max for the tdTomato (1) and GCaMP (2) image.
-
-    self.video_filepath = video_filepath
-    self.gcamp_filtered_path = None
-    self.tdTomato_filtered_path = None
-    self.frame_data_path = None
-    """
-    tdTomato_file=self.tdTomato_registered_path
-    GCaMP_file=self.gcamp_registered_path
-    frame_data=self.frame_data_path
-    input_video_file=self.video_filepath
-
-    n_of_z = self.n_of_z
-    frames_per_second = self.frames_per_second
-    min_range1 = self.min_range1
-    max_range1 = self.max_range1
-    min_range2 = self.min_range2
-    max_range2 = self.max_range2
-
-    #Get tdTomato images
-    with open(tdTomato_file, "rb") as f:
-      tdTomato_Filtered=pickle.load(f)
-    #Get GCaMP images
-    with open(GCaMP_file, "rb") as f:
-      GCaMP_Filtered=pickle.load(f)
-    #Get frame data
-    with open(frame_data, "rb") as f:
-      [image_in_camera_index,camera_minus_image_index]=pickle.load(f)
-
-    #Number of frames should be the same for tdTomato and GCaMP.
-    total_frames=tdTomato_Filtered.shape[0]
-    x_size=tdTomato_Filtered.shape[2]#number of columns
-    y_size=tdTomato_Filtered.shape[1]#number of rows
-    #image_in_camera_index has a value for each z-level. Take the index for each stack.
-    stack_camera_index=image_in_camera_index[0::n_of_z,0]
-
-    #Make a video with the tdTomato signal + GCaMP signal + prep image
-    video_name = (tdTomato_file+"synchronized_video_gray.avi")
-    #Image width will be 2 * imaging_width + re-sized video (width:height is 4:3 ratio if preserving the aspct): specify width first.
-    #We want to make the heights to match.
-    resized_video_width=(y_size//3)*4
-    #Final "0" necessary for gray scale image
-    video = cv2.VideoWriter(video_name,cv2.VideoWriter_fourcc(*'mp4v'),frames_per_second,(x_size*2+resized_video_width,y_size),0)
-
-
-    #For making video, all numbers below min_range1 will be treated as 0.
-    #all numbers above max_range1 will be treated as max_range1 value.
-    #Then normalize the image to be between 0 to 255.
-    tdTomato_Filtered[tdTomato_Filtered<=min_range1]=0
-    tdTomato_Filtered[tdTomato_Filtered>=max_range1]=max_range1
-    range_adjusted_tdTomato=(tdTomato_Filtered/max_range1)*255
-
-    #For GCaMP
-    GCaMP_Filtered[GCaMP_Filtered<=min_range2]=0
-    GCaMP_Filtered[GCaMP_Filtered>=max_range2]=max_range2
-    range_adjusted_GCaMP=(GCaMP_Filtered/max_range2)*255
-
-    #Open the video file
-    cap = cv2.VideoCapture(input_video_file)
-    max_frames = cap.get(7)
-    #Initialize the frame
-    frame_original=np.zeros((y_size,x_size*2+resized_video_width))
-
-    for video_frame in range(total_frames):
-      #Insert images in the right location.
-      frame_original[:,0:x_size]=range_adjusted_tdTomato[video_frame,:,:]
-      frame_original[:,x_size:x_size*2]=range_adjusted_GCaMP[video_frame,:,:]
-
-      #Get the correct prep image.
-      #check to make sure the frame is within the range.
-      #Have 10 frame buffer
-      if stack_camera_index[video_frame]<max_frames-10:
-        frame_number=stack_camera_index[video_frame]
-      else:
-        frame_number=max_frames-10
-      #print(frame_number)
-      cap.set(1, frame_number)
-      ret, temp_frame = cap.read()
-      temp_frame=temp_frame[:,:,0]
-      #resize the prep image
-      new_image=cv2.resize(temp_frame,(resized_video_width, y_size),interpolation = cv2.INTER_AREA)
-
-      #insert the prep image in the right location. The above should already be in 0-255 range.
-      frame_original[:,x_size*2:x_size*2+resized_video_width]=new_image
-      #convert to gray scale color image
-      #frame = cv2.cvtColor(np.int8(frame_original), cv2.COLOR_GRAY2BGR)
-      #frame = cv2.applyColorMap(np.uint8(frame_original),cv2.COLORMAP_BONE)
-      frame=np.uint8(frame_original)
-
-      video.write(frame)
-
-    video.release()
-
-
   def make_synchronized_video_gray_piezo(self):
     """
     For Piezo trials that don't have the videos.
@@ -661,6 +552,12 @@ class AxonRecording_separate_z:
     with open(gcamp_file,"rb") as f:
       gcamp_registered=pickle.load(f)
 
+    #tdTomato_registered and gcamp_registered may contain negative pixel values.
+    #image brightness should always be positive (or zero), so subtract the min
+    #value to make all values above zero.
+    tdTomato_registered=tdTomato_registered-np.min(tdTomato_registered)
+    gcamp_registered=gcamp_registered-np.min(gcamp_registered)
+
     #initialize the data array
     average_tdTomato_all=np.zeros((n_of_z,tdTomato_registered.shape[2],tdTomato_registered.shape[3]))
     average_gcamp_all=np.zeros_like(average_tdTomato_all)
@@ -698,8 +595,8 @@ class AxonRecording_separate_z:
       DR_R_map=np.zeros_like(base_gcamp)
 
       #calculate ratio, but we need to exclude pixels with very low tdTomato value to avoid high noise
-      ratio_response=np.divide(average_gcamp,average_tdTomato, where=(average_tdTomato>=tdTomato_threshold))
-      ratio_baseline=np.divide(base_gcamp,base_tdTomato, where=(average_tdTomato>=tdTomato_threshold))
+      ratio_response=np.divide(average_gcamp,average_tdTomato, where=((average_tdTomato>=tdTomato_threshold)&(base_tdTomato>=tdTomato_threshold)))
+      ratio_baseline=np.divide(base_gcamp,base_tdTomato, where=((average_tdTomato>=tdTomato_threshold)&(base_tdTomato>=tdTomato_threshold)))
 
       #plot in a figure
       fig, axs = plt.subplots(1,3, figsize=(12,5),tight_layout = True)
@@ -716,8 +613,8 @@ class AxonRecording_separate_z:
       axs[1].set_xticks([])
       axs[1].set_title('DF/F map', fontsize=20)
 
-      #DR/R calculated only for pixels whose ratio_baseline is above the threshold
-      DR_R_map=np.divide((ratio_response-ratio_baseline),ratio_baseline,where=(ratio_baseline>=ratio_threshold))
+      #DR/R calculated only for pixels whose ratio_baseline is above the threshold and we have certain level of baseline gcamp
+      DR_R_map=np.divide((ratio_response-ratio_baseline),ratio_baseline,where=((ratio_baseline>=ratio_threshold)&(base_gcamp>=gcamp_threshold)))
       axs[2].imshow(DR_R_map,vmin=min_range3,vmax=max_range3)
       axs[2].set_yticks([])
       axs[2].set_xticks([])
@@ -761,27 +658,34 @@ class AxonRecording_separate_z:
       [average_tdTomato_all,average_gcamp_all,base_tdTomato_all, base_gcamp_all, ratio_response_all, ratio_baseline_all, DF_F_map_all, DR_R_map_all]=pickle.load(f)
 
     #take the maximum intensity projection of the responses.
+    base_gcamp_projection=np.nanmax(base_gcamp_all,axis=0)
     DF_F_projection=np.nanmax(DF_F_map_all,axis=0)
     DR_R_projection=np.nanmax(DR_R_map_all,axis=0)
 
     #plot in a figure
-    fig, axs = plt.subplots(1,2, figsize=(10,5),tight_layout = True)
+    fig, axs = plt.subplots(1,3, figsize=(12,5),tight_layout = True)
 
-    axs[0].imshow(DF_F_projection,vmin=min_range3,vmax=max_range3)
+    axs[0].imshow(base_gcamp_projection)
     axs[0].set_yticks([])
     axs[0].set_xticks([])
-    axs[0].set_title('DF/F map', fontsize=20)
+    axs[0].set_title('gcamp merged', fontsize=20)
 
-    axs[1].imshow(DR_R_projection,vmin=min_range3,vmax=max_range3)
+
+    axs[1].imshow(DF_F_projection,vmin=min_range3,vmax=max_range3)
     axs[1].set_yticks([])
     axs[1].set_xticks([])
-    axs[1].set_title('DR/R map', fontsize=20)
+    axs[1].set_title('DF/F merged', fontsize=20)
+
+    axs[2].imshow(DR_R_projection,vmin=min_range3,vmax=max_range3)
+    axs[2].set_yticks([])
+    axs[2].set_xticks([])
+    axs[2].set_title('DR/R merged', fontsize=20)
 
     #Save the merged maps.
     outfile_name=map_data_file+'_merged'
 
     with open(outfile_name, "wb") as f:
-      pickle.dump([DF_F_projection, DR_R_projection], f)
+      pickle.dump([base_gcamp_projection, DF_F_projection, DR_R_projection], f)
     print(outfile_name)
 
     self.merged_path = outfile_name
