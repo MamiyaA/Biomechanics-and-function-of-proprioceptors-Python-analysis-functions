@@ -14,7 +14,6 @@
 * parameters are set in .yaml file
 
 """
-
 #Import packages
 from ScanImageTiffReader import ScanImageTiffReader
 import numpy as np
@@ -77,7 +76,7 @@ class LegVibration_separate_z:
     self.max_range2 = config[0]['max_range2']
     self.min_range3 = config[0]['min_range3']
     self.max_range3 = config[0]['max_range3']
-    self.gcamp_threshold = config[0]['gcamp_threshold']
+    self.gcamp_threshold_ratio = config[0]['gcamp_threshold_ratio']
     self.tdTomato_threshold = config[0]['tdTomato_threshold']
     self.ratio_threshold = config[0]['ratio_threshold']
     self.response_range = config[0]['response_range']
@@ -534,7 +533,7 @@ class LegVibration_separate_z:
     piezo_data_file=self.piezo_data_path
     min_range3 = self.min_range3
     max_range3 = self.max_range3
-    gcamp_threshold = self.gcamp_threshold
+    gcamp_threshold_ratio = self.gcamp_threshold_ratio
     tdTomato_threshold = self.tdTomato_threshold
     ratio_threshold = self.ratio_threshold
 
@@ -567,6 +566,13 @@ class LegVibration_separate_z:
     ratio_baseline_all=np.zeros_like(average_tdTomato_all)
     DF_F_map_all=np.zeros_like(average_tdTomato_all)
     DR_R_map_all=np.zeros_like(average_tdTomato_all)
+
+    #calculate the threshold pixel value
+    flattened_array=np.ravel(base_gcamp_all)
+    gcamp_sorted=np.sort(flattened_array)
+    threshold_index=np.round(gcamp_sorted.shape[0]*gcamp_threshold_ratio)
+    threshold_index=threshold_index.astype(int)
+    gcamp_threshold=gcamp_sorted[threshold_index]
 
 
     #calcuate the baseline and the response images for each z-level
@@ -608,6 +614,9 @@ class LegVibration_separate_z:
 
       #DF/F calculated only for pixels whose base_gcamp value is above the threshold
       DF_F_map=np.divide((average_gcamp-base_gcamp),base_gcamp,where=(base_gcamp>=gcamp_threshold))
+      # where=() in np.divide seems to give inconsitent results in google colab.
+      #Force it with the following line for now.
+      DF_F_map[base_gcamp<=gcamp_threshold]=0
       axs[1].imshow(DF_F_map,vmin=min_range3,vmax=max_range3)
       axs[1].set_yticks([])
       axs[1].set_xticks([])
