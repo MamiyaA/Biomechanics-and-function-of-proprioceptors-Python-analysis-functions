@@ -134,11 +134,11 @@ class LegVibration_separate_z:
 
     #Split into different z-levels and apply 3D gaussian filter
     #First for the GCaMP signal.
-    depth_avg_image_GCaMP=np.zeros((n_of_z,GCaMPSignal.shape[0]//n_of_z,GCaMPSignal.shape[1],GCaMPSignal.shape[2]))
+    depth_avg_image_GCaMP=np.zeros((n_of_z,GCaMPSignal.shape[0]//n_of_z,GCaMPSignal.shape[1],GCaMPSignal.shape[2]),dtype=np.int16)
 
     for depth in range(n_of_z):
         depthIndex=np.arange(depth,GCaMPSignal.shape[0],n_of_z)
-        depth_avg_image_GCaMP[depth,:,:,:] = gaussian_filter(GCaMPSignal[depthIndex], sigma=gaussian_sigma_array)
+        depth_avg_image_GCaMP[depth,:,:,:] = np.round(gaussian_filter(GCaMPSignal[depthIndex], sigma=gaussian_sigma_array))
 
     #save the depth_avg_image
     image_file_name=file_name.split('.')
@@ -149,11 +149,11 @@ class LegVibration_separate_z:
     del depth_avg_image_GCaMP
 
     #Do the same for the tdTomato signal.
-    depth_avg_image_tdTomato=np.zeros((n_of_z,tdTomatoSignal.shape[0]//n_of_z,tdTomatoSignal.shape[1],tdTomatoSignal.shape[2]))
+    depth_avg_image_tdTomato=np.zeros((n_of_z,tdTomatoSignal.shape[0]//n_of_z,tdTomatoSignal.shape[1],tdTomatoSignal.shape[2]),dtype=np.int16)
 
     for depth in range(n_of_z):
         depthIndex=np.arange(depth,tdTomatoSignal.shape[0],n_of_z)
-        depth_avg_image_tdTomato[depth,:,:,:] = gaussian_filter(tdTomatoSignal[depthIndex], sigma=gaussian_sigma_array)
+        depth_avg_image_tdTomato[depth,:,:,:] = np.round(gaussian_filter(tdTomatoSignal[depthIndex], sigma=gaussian_sigma_array))
 
     #save the depth_avg_image
     image_file_name=file_name.split('.')
@@ -226,8 +226,8 @@ class LegVibration_separate_z:
         new_image2 = np.fft.ifftn(new_image2)
         new_image = new_image.real
         new_image2 = new_image2.real
-        registered_images[z_level,frame,:,:]=new_image
-        registered_images2[z_level,frame,:,:]=new_image2
+        registered_images[z_level,frame,:,:]=np.round(new_image)
+        registered_images2[z_level,frame,:,:]=np.round(new_image2)
 
     #Save the registered images
     if registration_channel==1:
