@@ -4,6 +4,10 @@
 
 ## Brief description of the notebook/class/functions
 ---
+### Manually_selecting_ROI_for_vibration_response_at_individual_z_level.ipynb
+** Jupyter notebook containing a class for manually selecting the ROI for the vibration responses at the individual z level**
+* shows the example usage and the actual ROI selection for all the data in the paper.
+
 ### 20210712_python_class_for_preprocessing_two_photon_imaging_data.ipynb: 
 
 **Python class for preprocessing two-photon imaging data and example usages**
