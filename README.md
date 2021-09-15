@@ -8,6 +8,8 @@
 **Jupyter notebook containing a class and scripts for manually selecting the ROI for the vibration responses at the individual z level**
 * shows the example usage and the actual ROI selection for all the data in the paper.
 * configured to run on the local computer instead of on google colab.
+![Example_ROI_selection](https://user-images.githubusercontent.com/13012359/133526459-0ebc1a3e-c6bc-4999-af18-4f2c27e13a6b.png)
+
 ---
 ### Manually_selecting_the_most_right_and_left_club_dendritic_tips.ipynb:
 **Jupyter notebook containing a class and scripts for manually selecting the most right and left dendritic tips of the club neurons**
