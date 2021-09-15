@@ -15,6 +15,8 @@
 **Jupyter notebook containing a class and scripts for manually selecting the most right and left dendritic tips of the club neurons**
 * shows the example usage and the actual tip selection for all the data in the paper.
 * configured to run on the local computer instead of on google colab.
+![Example_dendritic_tip_selection](https://user-images.githubusercontent.com/13012359/133526560-d0b78815-4fea-4cb2-81f8-1cf26367b056.png)
+
 ---
 ### 20210712_python_class_for_preprocessing_two_photon_imaging_data.ipynb: 
 
